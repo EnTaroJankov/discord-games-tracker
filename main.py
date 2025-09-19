@@ -13,8 +13,6 @@ load_dotenv()
 
 CMD_PREFIX = '!'
 
-SEND_RESULTS=True
-
 user_dict = {}
 
 # Logging setup
@@ -41,6 +39,8 @@ def required_env(name: str) -> str:
 
 DISCORD_TOKEN = required_env("DISCORD_BOT_TOKEN")
 CHANNEL_ID = required_env("CHANNEL_ID")
+SEND_RESULTS = required_env("SEND_RESULTS")
+
 
 @bot.event
 async def on_ready():
