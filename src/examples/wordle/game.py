@@ -52,13 +52,13 @@ async def _resolve_member_from_token(msg, token):
             if any((u and u.casefold() == handle_ci) for u in usernames):
                 return m.id
             candidates.append((m, usernames))
-
+        
         # Try normalized exact match (strip non-alphanum)
         handle_norm = normalize(handle)
         for m, usernames in candidates:
             if any((u and normalize(u) == handle_norm) for u in usernames):
                 return m.id
-
+        logger.warning("could not find user %s / %s. Beginning unique case-insensitive prefix matching.", handle, handle_norm)
         # As a last resort, try unique prefix match (case-insensitive) on any field
         prefix_matches = []
         for m, usernames in candidates:
@@ -79,7 +79,7 @@ async def _resolve_member_from_token(msg, token):
 
         if len(prefix_matches) == 1:
             return prefix_matches[0].id
-
+        logger.warning("could not find user %s / %s. Beginning fallback to directory search with candidates: %s.", handle, handle_norm, candidates)
         # Fallback to directory search (may find users not cached in members)
         try:
             # search_members is rate-limited; use a small limit to constrain results
