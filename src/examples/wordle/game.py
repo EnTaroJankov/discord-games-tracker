@@ -47,6 +47,7 @@ async def _resolve_member_from_token(msg, token):
                 getattr(m, "name", "") or "",
                 getattr(m, "display_name", "") or "",
                 getattr(m, "global_name", "") or "",
+                getattr(m, "nick", "") or "",
             ]
             # Exact case-insensitive match on any field
             if any((u and u.casefold() == handle_ci) for u in usernames):

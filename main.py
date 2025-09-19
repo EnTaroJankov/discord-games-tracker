@@ -1,8 +1,6 @@
 #!/usr/bin/python
 import os
 import logging
-from datetime import timezone, datetime
-from zoneinfo import ZoneInfo
 
 import discord
 from discord.ext import commands
@@ -47,6 +45,7 @@ def _env_bool(name: str, default: bool = False) -> bool:
 DISCORD_TOKEN = required_env("DISCORD_BOT_TOKEN")
 INPUT_CHANNEL_ID = required_env("INPUT_CHANNEL_ID")
 OUTPUT_CHANNEL_ID = required_env("OUTPUT_CHANNEL_ID")
+#GUILD_ID = required_env("GUILD_ID")
 SEND_RESULTS = _env_bool("SEND_RESULTS", default=False)
 
 
@@ -57,11 +56,7 @@ async def on_ready():
     output_channel = bot.get_channel(int(OUTPUT_CHANNEL_ID))
     await catchup(input_channel, user_dict, GAME)
     await print_stats(output_channel, user_dict, bot, GAME, SEND_RESULTS)
-    pacific = ZoneInfo("America/Los_Angeles")
-    now_pacific = datetime.now(pacific)
-    utc_now = datetime.now(timezone.utc)
-    utc_now_in_pacific = utc_now.astimezone(pacific)
-    #await send_last_n_month_calendars(output_channel, user_dict, 4, tz=pacific, use_emojis=False)
+    await send_last_n_month_calendars(output_channel, user_dict, 4, use_emojis=False)
 
 @bot.command()
 async def game(ctx, arg=None):
@@ -74,16 +69,27 @@ async def game(ctx, arg=None):
 async def on_message(msg):
     if msg.author == bot.user:
         return
-    logger.debug(
-        "on_message: guild=%s channel=%s author=%s content='%s...'",
-        getattr(getattr(msg, "guild", None), "name", None),
-        getattr(getattr(msg, "channel", None), "name", None),
-        getattr(getattr(msg, "author", None), "name", None),
-        (getattr(msg, "content", "") or "")[:120]
+    # Only read/parse messages from Discord apps:
+    # - bot accounts (author.bot)
+    # - application/interactions (message.application_id)
+    # - webhooks (message.webhook_id), including application-owned webhooks
+    is_app_message = (
+        getattr(getattr(msg, "author", None), "bot", False)
+        or getattr(msg, "application_id", None) is not None
+        or getattr(msg, "webhook_id", None) is not None
     )
-    count = await parse_result(msg, user_dict, GAME)
-    if count:
-        logger.info("on_message: ingested %s results from message id=%s", count, getattr(msg, "id", None))
+    if is_app_message:
+        logger.debug(
+            "on_message(app): guild=%s channel=%s author=%s content='%s...'",
+            getattr(getattr(msg, "guild", None), "name", None),
+            getattr(getattr(msg, "channel", None), "name", None),
+            getattr(getattr(msg, "author", None), "name", None),
+            (getattr(msg, "content", "") or "")[:120]
+        )
+        count = await parse_result(msg, user_dict, GAME)
+        if count:
+            logger.info("on_message: ingested %s results from message id=%s", count, getattr(msg, "id", None))
+    # Always let command handling proceed (so humans can use !commands)
     await bot.process_commands(msg)
 
 
