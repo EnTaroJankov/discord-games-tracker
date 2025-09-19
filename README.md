@@ -28,8 +28,6 @@ A Discord bot for aggregating game results posted in text channels and presentin
   - `APScheduler==3.11.0`
   - `python-dotenv`
 
-Install dependencies:
-
 ## Setup
 
 Set these environment variables in a `.env` file in the root directory:
@@ -51,7 +49,10 @@ pip install -r requirements.txt
 ```
 
 
-run script with `python main.py`
+run script from source directory with 
+```
+python main.py
+```
 
 
 If you want to create your own bot account:
