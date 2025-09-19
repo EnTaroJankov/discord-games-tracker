@@ -36,29 +36,38 @@ def required_env(name: str) -> str:
         raise RuntimeError(f"Missing required env var: {name}")
     return v
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    v = os.environ.get(name)
+    if v is None:
+        return default
+    v = v.strip().lower()
+    return v in ("1", "true", "t", "yes", "y", "on")
+
 
 DISCORD_TOKEN = required_env("DISCORD_BOT_TOKEN")
-CHANNEL_ID = required_env("CHANNEL_ID")
-SEND_RESULTS = required_env("SEND_RESULTS")
+INPUT_CHANNEL_ID = required_env("INPUT_CHANNEL_ID")
+OUTPUT_CHANNEL_ID = required_env("OUTPUT_CHANNEL_ID")
+SEND_RESULTS = _env_bool("SEND_RESULTS", default=False)
 
 
 @bot.event
 async def on_ready():
     logger.info("Bot is ready. Guilds: %s", [g.name for g in bot.guilds])
-    channel = bot.get_channel(int(CHANNEL_ID))
-    await catchup(channel, user_dict, GAME)
-    await print_stats(channel, user_dict, bot, GAME, bool(SEND_RESULTS))
+    input_channel = bot.get_channel(int(INPUT_CHANNEL_ID))
+    output_channel = bot.get_channel(int(OUTPUT_CHANNEL_ID))
+    await catchup(input_channel, user_dict, GAME)
+    await print_stats(output_channel, user_dict, bot, GAME, SEND_RESULTS)
     pacific = ZoneInfo("America/Los_Angeles")
     now_pacific = datetime.now(pacific)
     utc_now = datetime.now(timezone.utc)
     utc_now_in_pacific = utc_now.astimezone(pacific)
-    await send_last_n_month_calendars(channel, user_dict, 4, tz=pacific, use_emojis=False)
+    #await send_last_n_month_calendars(output_channel, user_dict, 4, tz=pacific, use_emojis=False)
 
 @bot.command()
 async def game(ctx, arg=None):
     logger.info("!game invoked by %s in #%s", ctx.author, getattr(ctx.channel, "name", ctx.channel))
     await catchup(ctx.channel, user_dict, GAME)
-    await print_stats(ctx.channel, user_dict, bot, GAME, bool(SEND_RESULTS))
+    await print_stats(ctx.channel, user_dict, bot, GAME, SEND_RESULTS)
 
 
 @bot.event

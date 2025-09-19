@@ -80,7 +80,7 @@ def _longest_all_time_streak(user, is_win=None) -> int:
             longest = max(longest, length)
     return longest
 
-async def print_stats(text_channel, user_dict: Dict[int, Any], bot, game: Game, send_results: bool = True):
+async def print_stats(text_channel, user_dict: Dict[int, Any], bot, game: Game, send_results: bool = False):
     embed = await game.build_stats_embed(
         user_dict, bot,
         helpers={
@@ -126,7 +126,6 @@ async def parse_result(msg, user_dict: Dict[int, Any], game: Game) -> int:
         return 0
 
     if not parsed_items:
-        logger.debug("parse_result: no parsable results in message id=%s", getattr(msg, "id", None))
         return 0
 
     ingested = 0
@@ -166,7 +165,7 @@ async def parse_result(msg, user_dict: Dict[int, Any], game: Game) -> int:
                 pass
 
             await user_dict[member_id].add_result(result)
-            logger.info(
+            logger.debug(
                 "parse_result: stored result member_id=%s number=%s score=%s ts=%s",
                 member_id, number, score_val, getattr(timestamp, "isoformat", lambda: timestamp)()
             )

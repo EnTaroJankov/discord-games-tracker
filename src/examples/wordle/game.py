@@ -69,7 +69,7 @@ def _resolve_member_from_token(msg, token):
             return prefix_matches[0].id
 
         # If ambiguous or no match, fall through
-        logger.info("resolve_member: could not uniquely resolve handle '%s' in guild '%s'", handle, getattr(msg.guild, "name", None))
+        logger.warning("resolve_member: could not uniquely resolve handle '%s' in guild '%s'", handle, getattr(msg.guild, "name", None))
 
     return None
 
@@ -87,7 +87,7 @@ class WordleGame:
         any_line_parsed = False
         line_matches = list(_iter_result_lines(getattr(msg, "content", "") or ""))
         if not line_matches:
-            logger.debug("parse_message: no matching lines for msg id=%s content='%s...'", getattr(msg, "id", None), (msg.content or "")[:80])
+            #logger.debug("parse_message: no matching lines for msg id=%s content='%s...'", getattr(msg, "id", None), (msg.content or "")[:80])
             return []
 
         logger.debug("parse_message: found %s result lines in msg id=%s", len(line_matches), getattr(msg, "id", None))
@@ -98,7 +98,7 @@ class WordleGame:
             for tok in handle_tokens:
                 member_id = _resolve_member_from_token(msg, tok)
                 if member_id is None:
-                    logger.info("parse_message: could not resolve handle token '%s' in msg id=%s", tok, getattr(msg, "id", None))
+                    logger.warning("parse_message: could not resolve handle token '%s' in msg id=%s", tok, getattr(msg, "id", None))
                     continue
                 items.append({
                     "member_id": member_id,

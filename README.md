@@ -36,9 +36,10 @@ Set these environment variables in a `.env` file in the root directory:
 
 ```
 DISCORD_BOT_TOKEN=<SECRET>
-CHANNEL_ID=<SECRET>
+INPUT_CHANNEL_ID=<SECRET>
 LOG_LEVEL=INFO
 SEND_RESULTS=False
+OUTPUT_CHANNEL_ID=<SECRET>
 ```
 
 Install dependencies (set up a virtual environment first)
