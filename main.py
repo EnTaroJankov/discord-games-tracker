@@ -47,7 +47,7 @@ async def on_ready():
     logger.info("Bot is ready. Guilds: %s", [g.name for g in bot.guilds])
     channel = bot.get_channel(int(CHANNEL_ID))
     await catchup(channel, user_dict, GAME)
-    await print_stats(channel, user_dict, bot, GAME, SEND_RESULTS)
+    await print_stats(channel, user_dict, bot, GAME, bool(SEND_RESULTS))
     pacific = ZoneInfo("America/Los_Angeles")
     now_pacific = datetime.now(pacific)
     utc_now = datetime.now(timezone.utc)
@@ -58,7 +58,7 @@ async def on_ready():
 async def game(ctx, arg=None):
     logger.info("!game invoked by %s in #%s", ctx.author, getattr(ctx.channel, "name", ctx.channel))
     await catchup(ctx.channel, user_dict, GAME)
-    await print_stats(ctx.channel, user_dict, bot, GAME, SEND_RESULTS)
+    await print_stats(ctx.channel, user_dict, bot, GAME, bool(SEND_RESULTS))
 
 
 @bot.event
