@@ -24,7 +24,7 @@ def _iter_result_lines(text: str):
         if handles:
             yield tries_token, total, handles
 
-def _resolve_member_from_token(msg, token):
+async def _resolve_member_from_token(msg, token):
     # Direct user mention: <@123> or <@!123>
     if token.startswith("<@") and token.endswith(">"):
         raw = token[2:-1].lstrip("!")
@@ -46,7 +46,7 @@ def _resolve_member_from_token(msg, token):
             usernames = [
                 getattr(m, "name", "") or "",
                 getattr(m, "display_name", "") or "",
-                getattr(getattr(m, "global_name", None), "strip", lambda: "")() if hasattr(m, "global_name") else (getattr(m, "global_name", None) or ""),
+                getattr(m, "global_name", "") or "",
             ]
             # Exact case-insensitive match on any field
             if any((u and u.casefold() == handle_ci) for u in usernames):
@@ -65,8 +65,45 @@ def _resolve_member_from_token(msg, token):
             if any((u and u.casefold().startswith(handle_ci)) for u in usernames):
                 prefix_matches.append(m)
 
+        # Tie-break: if multiple prefix matches, prefer a display_name prefix match, then name match
+        if len(prefix_matches) > 1:
+            pruned = []
+            for m in prefix_matches:
+                dn = (getattr(m, "display_name", "") or "").casefold()
+                nm = (getattr(m, "name", "") or "").casefold()
+                gn = (getattr(m, "global_name", "") or "").casefold()
+                if dn.startswith(handle_ci) or nm.startswith(handle_ci) or gn.startswith(handle_ci):
+                    pruned.append(m)
+            if len(pruned) == 1:
+                return pruned[0].id
+
         if len(prefix_matches) == 1:
             return prefix_matches[0].id
+
+        # Fallback to directory search (may find users not cached in members)
+        try:
+            # search_members is rate-limited; use a small limit to constrain results
+            matches = []
+            if hasattr(msg.guild, "search_members"):
+                found = await msg.guild.search_members(handle, limit=5)  # type: ignore
+                for m in found or []:
+                    usernames = [
+                        getattr(m, "name", "") or "",
+                        getattr(m, "display_name", "") or "",
+                        getattr(m, "global_name", "") or "",
+                    ]
+                    if any((u and u.casefold() == handle_ci) for u in usernames):
+                        matches.append(m)
+                if len(matches) == 1:
+                    return matches[0].id
+                # try prefix uniqueness in search results
+                if len(matches) == 0 and found:
+                    prefix = [m for m in found if (getattr(m, "display_name", "") or "").casefold().startswith(handle_ci) or (getattr(m, "name", "") or "").casefold().startswith(handle_ci)]
+                    if len(prefix) == 1:
+                        return prefix[0].id
+        except Exception:
+            # Ignore search errors and fall through to warning
+            pass
 
         # If ambiguous or no match, fall through
         logger.warning("resolve_member: could not uniquely resolve handle '%s' in guild '%s'", handle, getattr(msg.guild, "name", None))
@@ -96,7 +133,7 @@ class WordleGame:
             # Generalized result field: 'score' instead of Wordle-specific 'tries'
             score_val = int(tries_tok) if str(tries_tok).isdigit() else str(tries_tok)
             for tok in handle_tokens:
-                member_id = _resolve_member_from_token(msg, tok)
+                member_id = await _resolve_member_from_token(msg, tok)
                 if member_id is None:
                     logger.warning("parse_message: could not resolve handle token '%s' in msg id=%s", tok, getattr(msg, "id", None))
                     continue
