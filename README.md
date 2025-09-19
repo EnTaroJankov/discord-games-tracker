@@ -34,13 +34,16 @@ Install dependencies:
 
 Set these environment variables in a `.env` file in the root directory:
 
+
 ```
 DISCORD_BOT_TOKEN=<SECRET>
 INPUT_CHANNEL_ID=<SECRET>
 LOG_LEVEL=INFO
-SEND_RESULTS=False
+SEND_RESULTS=False (whether to send messages to discord or stdout)
 OUTPUT_CHANNEL_ID=<SECRET>
 ```
+
+Get secrets from: https://github.com/EnTaroJankov/discord-games-tracker/settings/secrets/actions
 
 Install dependencies (set up a virtual environment first)
 ```
